@@ -72,22 +72,11 @@ document.addEventListener('DOMContentLoaded', function () {
             new Chart(ctx, { type: 'bar', data: { labels: data.map(d => d.type), datasets: [ { label: 'Hata Adedi', data: data.map(d => d.count), backgroundColor: '#38bdf8', yAxisID: 'y' }, { label: 'Kümülatif %', data: data.map(d => d.cumulative), type: 'line', borderColor: '#ef4444', tension: 0.1, yAxisID: 'y1' } ] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { position: 'left', title: { display: true, text: 'Hata Adedi' } }, y1: { position: 'right', min: 0, max: 100, title: { display: true, text: 'Kümülatif Yüzde (%)' }, grid: { drawOnChartArea: false } } }, plugins: { legend: { position: 'bottom' } } } });
         }
         
-        // --- API FONKSİYONLARI ---
-        function getApiKey() {
-            return localStorage.getItem('geminiApiKey');
-        }
-
-        function saveApiKey(apiKey) {
-            localStorage.setItem('geminiApiKey', apiKey);
-        }
-
-        function getUserName() {
-            return localStorage.getItem('userName') || '';
-        }
-
-        function saveUserName(name) {
-            localStorage.setItem('userName', name);
-        }
+        // --- API & AYARLAR FONKSİYONLARI ---
+        function getApiKey() { return localStorage.getItem('geminiApiKey'); }
+        function saveApiKey(apiKey) { localStorage.setItem('geminiApiKey', apiKey); }
+        function getUserName() { return localStorage.getItem('userName') || ''; }
+        function saveUserName(name) { localStorage.setItem('userName', name); }
 
         async function callGemini(prompt) {
             const apiKey = getApiKey();
@@ -116,12 +105,6 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
-        async function callGeminiForParsing(prompt) {
-            const text = await callGemini(prompt);
-            const jsonString = text.replace(/```json/g, '').replace(/```/g, '').trim();
-            return JSON.parse(jsonString);
-        }
-        
         async function callGeminiForInterpretation(prompt, targetElement, loadingElement, tabKey) {
             loadingElement.classList.remove('hidden');
             targetElement.classList.add('hidden');
@@ -135,7 +118,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 targetElement.innerHTML = htmlContent;
                 targetElement.classList.remove('hidden');
 
-                // AI çıktısını geçmişe kaydet
                 const history = getHistory();
                 if (history.length > 0) {
                     const latestAnalysis = history[0];
@@ -157,14 +139,15 @@ document.addEventListener('DOMContentLoaded', function () {
         // --- ARAYÜZ OLUŞTURMA FONKSİYONLARI ---
         function createParetoSummary(data, total) {
             const container = document.getElementById('pareto-summary');
-            let tableHtml = `<div class="overflow-x-auto mb-6"><table class="w-full text-sm">...</table></div>`;
+            if(!container) return;
+            let tableHtml = `<div class="overflow-x-auto mb-6"><table class="w-full text-sm text-left">...</table></div>`;
             let tbodyHtml = '';
-            data.forEach(item => { tbodyHtml += `<tr class="bg-white border-b"><th class="px-6 py-4 font-medium">${item.type}</th><td class="px-6 py-4 text-right">${item.count}</td><td class="px-6 py-4 text-right">${item.percentage.toFixed(1)}</td><td class="px-6 py-4 text-right">${item.cumulative.toFixed(1)}</td></tr>`; });
+            data.forEach(item => { tbodyHtml += `<tr class="bg-white border-b"><th scope="row" class="px-6 py-4 font-medium text-stone-900 whitespace-nowrap">${item.type}</th><td class="px-6 py-4 text-right">${item.count}</td><td class="px-6 py-4 text-right">${item.percentage.toFixed(1)}</td><td class="px-6 py-4 text-right">${item.cumulative.toFixed(1)}</td></tr>`; });
             const vitalFew = data.filter(d => d.cumulative <= 80);
             const vitalFewCount = vitalFew.reduce((sum, item) => sum + item.count, 0);
             const vitalFewPercent = (total > 0) ? (vitalFewCount / total) * 100 : 0;
             tableHtml += `<div class="p-4 bg-amber-50 border-l-4 border-amber-500 rounded-r-lg">...</div>`;
-            container.innerHTML = tableHtml.replace('...', '<thead>...</thead><tbody>'+tbodyHtml+'</tbody>').replace('...', `<tr class="text-xs text-sky-800 uppercase bg-stone-50"><th class="px-6 py-3">Hata Türü</th><th class="px-6 py-3 text-right">Adet</th><th class="px-6 py-3 text-right">%</th><th class="px-6 py-3 text-right">Küm. %</th></tr>`).replace('...', `<h4 class="font-bold text-amber-800">Pareto Prensibi</h4><p class="text-amber-700 mt-2"><strong>${vitalFew.map(d => d.type).join(', ')}</strong> hataları, toplamın <strong>%${vitalFewPercent.toFixed(1)}</strong>'ini oluşturuyor. İyileştirme çabaları bu hatalara odaklanmalıdır.</p>`);
+            container.innerHTML = tableHtml.replace('...', '<thead class="text-xs text-sky-800 uppercase bg-stone-50"><tr><th scope="col" class="px-6 py-3">Hata Türü</th><th scope="col" class="px-6 py-3 text-right">Adet</th><th scope="col" class="px-6 py-3 text-right">%</th><th scope="col" class="px-6 py-3 text-right">Küm. %</th></tr></thead><tbody>'+tbodyHtml+'</tbody>').replace('...', `<h4 class="font-bold text-amber-800">Pareto Prensibi</h4><p class="text-amber-700 mt-2"><strong>${vitalFew.map(d => d.type).join(', ')}</strong> hataları, toplamın <strong>%${vitalFewPercent.toFixed(1)}</strong>'ini oluşturuyor. İyileştirme çabaları bu hatalara odaklanmalıdır.</p>`);
         }
 
         function renderOverviewTab(analysis) {
@@ -174,7 +157,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 container.innerHTML = '<div class="bg-white rounded-xl shadow-md p-6 text-center"><p>Ölçüm verisi bulunamadı.</p></div>';
                 return;
             }
-            container.innerHTML = `<div class="bg-white rounded-xl shadow-md p-6"><h3 class="text-2xl font-semibold text-stone-800 mb-4">Ölçüm Verileri Genel Bakış</h3><div class="overflow-x-auto"><table id="overview-table" class="w-full text-sm"></table></div></div>`;
+            container.innerHTML = `<div class="bg-white rounded-xl shadow-md p-6"><h3 class="text-2xl font-semibold text-stone-800 mb-4">Ölçüm Verileri Genel Bakış</h3><div class="overflow-x-auto"><table id="overview-table" class="w-full text-sm text-left"></table></div></div>`;
             const tbody = measurementData.map(d => {
                 if(d.values.length === 0) return '';
                 const mean = calculateMean(d.values);
@@ -182,9 +165,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 const min = Math.min(...d.values);
                 const max = Math.max(...d.values);
                 const range = max - min;
-                return `<tr class="bg-white border-b"><th class="px-6 py-4 font-medium">${d.group}</th><td class="px-6 py-4 text-right">${mean.toFixed(4)}</td><td class="px-6 py-4 text-right">${stdDev.toFixed(4)}</td><td class="px-6 py-4 text-right">${min.toFixed(4)}</td><td class="px-6 py-4 text-right">${max.toFixed(4)}</td><td class="px-6 py-4 text-right">${range.toFixed(4)}</td></tr>`;
+                return `<tr class="bg-white border-b"><th scope="row" class="px-6 py-4 font-medium text-stone-900 whitespace-nowrap">${d.group}</th><td class="px-6 py-4 text-right">${mean.toFixed(4)}</td><td class="px-6 py-4 text-right">${stdDev.toFixed(4)}</td><td class="px-6 py-4 text-right">${min.toFixed(4)}</td><td class="px-6 py-4 text-right">${max.toFixed(4)}</td><td class="px-6 py-4 text-right">${range.toFixed(4)}</td></tr>`;
             }).join('');
-            container.querySelector('#overview-table').innerHTML = `<thead class="text-xs text-sky-800 uppercase bg-stone-50"><tr><th class="px-6 py-3">Grup</th><th class="px-6 py-3 text-right">Ortalama</th><th class="px-6 py-3 text-right">Std. Sapma</th><th class="px-6 py-3 text-right">Min</th><th class="px-6 py-3 text-right">Max</th><th class="px-6 py-3 text-right">Açıklık</th></tr></thead><tbody>${tbody}</tbody>`;
+            container.querySelector('#overview-table').innerHTML = `<thead class="text-xs text-sky-800 uppercase bg-stone-50"><tr><th scope="col" class="px-6 py-3">Grup</th><th scope="col" class="px-6 py-3 text-right">Ortalama</th><th scope="col" class="px-6 py-3 text-right">Std. Sapma</th><th scope="col" class="px-6 py-3 text-right">Min</th><th scope="col" class="px-6 py-3 text-right">Max</th><th scope="col" class="px-6 py-3 text-right">Açıklık</th></tr></thead><tbody>${tbody}</tbody>`;
         }
 
         function renderXrTab(analysis) {
@@ -227,7 +210,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     .replace('{lclR}', lclR.toFixed(4));
                 callGeminiForInterpretation(promptText, container.querySelector('#gemini-xr-output'), container.querySelector('#gemini-xr-loader'), 'xr');
             });
-            container.querySelectorAll('.export-btn').forEach(btn => btn.addEventListener('click', (e) => handleExport(e.target.dataset.type, e.target.dataset.tab)));
         }
 
         function renderCapabilityTab(analysis) {
@@ -247,10 +229,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const n = measurementData[0].values.length;
             const controlChartFactors = { 2:{d2:1.128}, 3:{d2:1.693}, 4:{d2:2.059}, 5:{d2:2.326}, 6:{d2:2.534}, 7:{d2:2.704}, 8:{d2:2.847}, 9:{d2:2.970}, 10:{d2:3.078} };
-            const d2 = controlChartFactors[n] ? controlChartFactors[n].d2 : calculateStdDev(measurementData.map(d => d.values));
+            const d2 = controlChartFactors[n] ? controlChartFactors[n].d2 : null;
             const groupRanges = measurementData.map(d => Math.max(...d.values) - Math.min(...d.values));
             const rBar = calculateMean(groupRanges);
-            const stdDev = rBar / d2;
+            const stdDev = d2 ? rBar / d2 : calculateStdDev(measurementData.map(d => d.values));
             const overallMean = calculateMean(measurementData.map(d => calculateMean(d.values)));
             const cp = (specs.usl - specs.lsl) / (6 * stdDev);
             const cpu = (specs.usl - overallMean) / (3 * stdDev);
@@ -268,7 +250,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     .replace('{lsl}', specs.lsl);
                 callGeminiForInterpretation(promptText, container.querySelector('#gemini-cpk-output'), container.querySelector('#gemini-cpk-loader'), 'capability');
             });
-            container.querySelectorAll('.export-btn').forEach(btn => btn.addEventListener('click', (e) => handleExport(e.target.dataset.type, e.target.dataset.tab)));
         }
 
         function renderParetoTab(analysis) {
@@ -314,15 +295,13 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         
         // --- GEÇMİŞ ANALİZ FONKSİYONLARI ---
-        function getHistory() {
-            return JSON.parse(localStorage.getItem('analysisHistory')) || [];
-        }
+        function getHistory() { return JSON.parse(localStorage.getItem('analysisHistory')) || []; }
 
         function saveAnalysisToHistory(analysis) {
             const history = getHistory();
-            history.unshift(analysis); // En yeni analizi başa ekle
-            localStorage.setItem('analysisHistory', JSON.stringify(history.slice(0, 50))); // Son 50 analizi sakla
-            renderHistoryTab(); // Geçmiş sekmesini güncelle
+            history.unshift(analysis);
+            localStorage.setItem('analysisHistory', JSON.stringify(history.slice(0, 50)));
+            renderHistoryTab();
         }
 
         function loadAnalysisFromHistory(analysisId) {
@@ -350,7 +329,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 container.innerHTML = '<div class="bg-white rounded-xl shadow-md p-6 text-center"><p>Kaydedilmiş bir analiz bulunmuyor.</p></div>';
                 return;
             }
-            
             const listHtml = history.map(analysis => `
                 <div class="history-item bg-white p-4 rounded-lg shadow-sm flex justify-between items-center">
                     <div>
@@ -361,47 +339,100 @@ document.addEventListener('DOMContentLoaded', function () {
                         <button class="load-history-btn" data-id="${analysis.id}">Yükle</button>
                         <button class="delete-history-btn" data-id="${analysis.id}">Sil</button>
                     </div>
-                </div>
-            `).join('');
-
+                </div>`).join('');
             container.innerHTML = `<div class="space-y-4">${listHtml}</div>`;
-
-            container.querySelectorAll('.load-history-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => loadAnalysisFromHistory(e.target.dataset.id));
-            });
-            container.querySelectorAll('.delete-history-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    if(confirm('Bu analizi silmek istediğinizden emin misiniz?')) {
-                        deleteAnalysisFromHistory(e.target.dataset.id);
-                    }
-                });
-            });
+            container.querySelectorAll('.load-history-btn').forEach(btn => btn.addEventListener('click', (e) => loadAnalysisFromHistory(e.target.dataset.id)));
+            container.querySelectorAll('.delete-history-btn').forEach(btn => btn.addEventListener('click', (e) => {
+                if(confirm('Bu analizi silmek istediğinizden emin misiniz?')) {
+                    deleteAnalysisFromHistory(e.target.dataset.id);
+                }
+            }));
         }
 
+        // --- YENİ DOSYA İŞLEME MANTIĞI ---
 
-        async function handleAnalyzeData() {
-            const rawData = document.getElementById('data-input-area').value.trim();
+        function createDataEntryView() {
+            tabs.entry.content.innerHTML = `
+            <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+                <h3 class="text-2xl font-semibold text-stone-800 mb-2">1. Analiz Dosyasını Yükleyin</h3>
+                <p class="text-sm text-stone-600 mb-4">Analiz edilecek verileri içeren Excel (.xlsx, .xls) veya .csv dosyasını seçin.</p>
+                <div id="file-drop-area" class="mt-4 border-2 border-dashed border-stone-300 rounded-lg p-8 text-center cursor-pointer hover:border-sky-500 hover:bg-sky-50 transition-colors">
+                    <input type="file" id="file-input" class="hidden" accept=".xlsx, .xls, .csv">
+                    <label for="file-input" class="cursor-pointer w-full block">
+                        <svg class="mx-auto h-12 w-12 text-stone-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                        <span class="mt-2 block text-sm font-medium text-stone-600">Dosya seçmek için tıklayın veya sürükleyip bırakın</span>
+                        <span id="file-name-display" class="mt-1 block text-xs text-green-600 font-semibold"></span>
+                    </label>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+                <h3 class="text-2xl font-semibold text-stone-800 mb-2">2. Süreç Spesifikasyonlarını Girin (Cp, Cpk için)</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                    <div>
+                        <label for="lsl-input" class="block text-sm font-medium text-stone-700">Alt Spesifikasyon Limiti (ASL)</label>
+                        <input type="number" id="lsl-input" class="mt-1 block w-full p-2 rounded-md border-stone-300 shadow-sm" placeholder="Örn: 3.95">
+                    </div>
+                    <div><label for="target-input" class="block text-sm font-medium text-stone-700">Hedef Değer (Opsiyonel)</label><input type="number" id="target-input" class="mt-1 block w-full p-2 rounded-md border-stone-300 shadow-sm" placeholder="Örn: 4.00"></div>
+                    <div><label for="usl-input" class="block text-sm font-medium text-stone-700">Üst Spesifikasyon Limiti (ÜSL)</label><input type="number" id="usl-input" class="mt-1 block w-full p-2 rounded-md border-stone-300 shadow-sm" placeholder="Örn: 4.05"></div>
+                </div>
+            </div>
+            <div id="analyze-loader" class="text-center hidden"><div class="loader"></div></div>
+            <div class="text-center mt-8">
+                <button id="analyze-data-btn" class="w-full md:w-1/2 bg-green-600 text-white text-xl font-bold py-4 px-6 rounded-lg shadow-lg hover:bg-green-700 transition transform hover:scale-105 disabled:bg-stone-400 disabled:cursor-not-allowed disabled:transform-none" disabled>
+                    ANALİZİ BAŞLAT
+                </button>
+            </div>`;
+            setupFileUploader();
+            document.getElementById('analyze-data-btn').addEventListener('click', startAnalysisFromFile);
+        }
+
+        function setupFileUploader() {
+            const dropArea = document.getElementById('file-drop-area');
+            const fileInput = document.getElementById('file-input');
+            const fileNameDisplay = document.getElementById('file-name-display');
+            const analyzeBtn = document.getElementById('analyze-data-btn');
+
+            dropArea.addEventListener('click', () => fileInput.click());
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(e => dropArea.addEventListener(e, preventDefaults, false));
+            function preventDefaults(e) { e.preventDefault(); e.stopPropagation(); }
+            
+            ['dragenter', 'dragover'].forEach(e => dropArea.addEventListener(e, () => dropArea.classList.add('border-sky-500')));
+            ['dragleave', 'drop'].forEach(e => dropArea.addEventListener(e, () => dropArea.classList.remove('border-sky-500')));
+            
+            dropArea.addEventListener('drop', e => handleFiles(e.dataTransfer.files), false);
+            fileInput.addEventListener('change', e => handleFiles(e.target.files));
+
+            function handleFiles(files) {
+                if (files.length > 0) {
+                    const file = files[0];
+                    fileNameDisplay.textContent = file.name;
+                    analyzeBtn.disabled = false;
+                    analyzeBtn.file = file;
+                }
+            }
+        }
+
+        async function startAnalysisFromFile() {
+            const analyzeBtn = document.getElementById('analyze-data-btn');
+            const file = analyzeBtn.file;
+            if (!file) {
+                alert('Lütfen analiz edilecek bir dosya seçin.');
+                return;
+            }
+
             const lsl = document.getElementById('lsl-input').value;
             const usl = document.getElementById('usl-input').value;
             const target = document.getElementById('target-input').value;
 
-            if (!rawData) {
-                alert('Lütfen analiz edilecek verileri girin.');
-                return;
-            }
-
             const loader = document.getElementById('analyze-loader');
-            const button = document.getElementById('analyze-data-btn');
             loader.classList.remove('hidden');
-            button.classList.add('hidden');
-
-            const promptText = promptTemplates.parseData.replace('{rawData}', rawData);
+            analyzeBtn.classList.add('hidden');
 
             try {
-                const parsedData = await callGeminiForParsing(promptText);
-                if ((!parsedData.measurementData || parsedData.measurementData.length === 0) && (!parsedData.paretoData || parsedData.paretoData.length === 0)) {
-                    throw new Error("Veri formatı anlaşılamadı. Lütfen verilerinizi kontrol edin.");
-                }
+                const data = await file.arrayBuffer();
+                const workbook = XLSX.read(data);
+                const parsedData = processWorkbookData(workbook);
+                
                 const analysisData = {
                     ...parsedData,
                     specs: {
@@ -412,7 +443,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 };
                 appState.currentAnalysis = analysisData;
                 
-                const analysisTitle = prompt("Bu analiz için bir başlık girin (örn: 'Haftalık Üretim Raporu'):", `Analiz - ${new Date().toLocaleDateString('tr-TR')}`);
+                const analysisTitle = prompt("Bu analiz için bir başlık girin:", `Analiz: ${file.name}`);
                 if (analysisTitle) {
                     saveAnalysisToHistory({
                         id: `analysis-${Date.now()}`,
@@ -425,106 +456,102 @@ document.addEventListener('DOMContentLoaded', function () {
                 renderAllAnalyses();
                 Object.values(tabs).forEach(tab => tab.btn.classList.remove('disabled-tab'));
                 switchTab('overview');
+
             } catch (error) {
-                alert(`Veri yorumlanırken bir hata oluştu: ${error.message}`);
+                alert(`Analiz sırasında hata: ${error.message}`);
             } finally {
                 loader.classList.add('hidden');
-                button.classList.remove('hidden');
+                analyzeBtn.classList.remove('hidden');
             }
         }
 
+        function processWorkbookData(workbook) {
+            const measurementData = [];
+            const paretoData = [];
+            const sheetName = workbook.SheetNames[0];
+            if (!sheetName) throw new Error("Excel dosyasında sayfa bulunamadı.");
+
+            const sheet = workbook.Sheets[sheetName];
+            const jsonData = XLSX.utils.sheet_to_json(sheet); 
+
+            if (jsonData.length === 0) throw new Error("Seçilen dosyada veri bulunamadı.");
+
+            jsonData.forEach((row, index) => {
+                if(index === 0 && !('Sample 1' in row)) {
+                    throw new Error("Dosya formatı uyumsuz. 'Sample 1' sütunu başlığı bulunamadı.");
+                }
+                
+                const values = [];
+                for (const key in row) {
+                    if (key.toLowerCase().startsWith('sample')) {
+                        const value = row[key];
+                        if (value !== null && value !== undefined && !isNaN(parseFloat(value))) {
+                            values.push(parseFloat(value));
+                        }
+                    }
+                }
+
+                if (values.length > 0) {
+                    const groupName = row['Date'] || `Grup ${measurementData.length + 1}`;
+                    measurementData.push({ group: groupName, values: values });
+                }
+            });
+
+            if (measurementData.length === 0) {
+                throw new Error("Dosyada geçerli ölçüm verisi bulunamadı.");
+            }
+            return { measurementData, paretoData };
+        }
+
         function openSettingsModal() {
-            const modal = document.getElementById('settings-modal');
+            document.getElementById('settings-modal').classList.remove('hidden');
             document.getElementById('api-key-input').value = getApiKey() || '';
             document.getElementById('user-name-input').value = getUserName() || '';
-            modal.classList.remove('hidden');
         }
 
         function closeSettingsModal() {
-            const modal = document.getElementById('settings-modal');
-            modal.classList.add('hidden');
+            document.getElementById('settings-modal').classList.add('hidden');
         }
 
-        function createDataEntryView() {
-            tabs.entry.content.innerHTML = `
-            <div class="bg-white rounded-xl shadow-md p-6 mb-8">
-                <h3 class="text-2xl font-semibold text-stone-800 mb-2">1. Veri Setini Yapıştırın</h3>
-                <p class="text-sm text-stone-600 mb-4">Excel, CSV veya metin dosyasından kopyaladığınız verileri aşağıdaki alana yapıştırın. Hem ölçüm verilerini (gruplar halinde) hem de hata verilerini (tür ve adet) içerebilir.</p>
-                <textarea id="data-input-area" class="w-full h-60 p-2 border border-stone-300 rounded-md shadow-sm" placeholder="Örnek Ölçüm Verisi:\nGrup1,4.01,3.99,4.02\nGrup2,3.98,4.00,3.99\n\nÖrnek Hata Verisi:\nÇizik,24\nKenar Kırığı,12"></textarea>
-            </div>
-            <div class="bg-white rounded-xl shadow-md p-6 mb-8">
-                <h3 class="text-2xl font-semibold text-stone-800 mb-2">2. Süreç Spesifikasyonlarını Girin (Cp, Cpk için)</h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                    <div>
-                        <label for="lsl-input" class="block text-sm font-medium text-stone-700">Alt Spesifikasyon Limiti (ASL)</label>
-                        <input type="number" id="lsl-input" class="mt-1 block w-full p-2 rounded-md border-stone-300 shadow-sm" placeholder="Örn: 3.95">
-                    </div>
-                    <div>
-                        <label for="target-input" class="block text-sm font-medium text-stone-700">Hedef Değer (Opsiyonel)</label>
-                        <input type="number" id="target-input" class="mt-1 block w-full p-2 rounded-md border-stone-300 shadow-sm" placeholder="Örn: 4.00">
-                    </div>
-                    <div>
-                        <label for="usl-input" class="block text-sm font-medium text-stone-700">Üst Spesifikasyon Limiti (ÜSL)</label>
-                        <input type="number" id="usl-input" class="mt-1 block w-full p-2 rounded-md border-stone-300 shadow-sm" placeholder="Örn: 4.05">
-                    </div>
-                </div>
-            </div>
-            <div id="analyze-loader" class="text-center hidden"><div class="loader"></div></div>
-            <div class="text-center mt-8">
-                <button id="analyze-data-btn" class="w-full md:w-1/2 bg-green-600 text-white text-xl font-bold py-4 px-6 rounded-lg shadow-lg hover:bg-green-700 transition transform hover:scale-105">
-                    VERİYİ YORUMLA VE ANALİZ ET
-                </button>
-            </div>`;
-            document.getElementById('analyze-data-btn').addEventListener('click', handleAnalyzeData);
-        }
-        
-
-        // --- Main Initialization ---
+        // --- Ana Başlatma Fonksiyonu ---
         async function init() {
             console.log("init() fonksiyonu başlatılıyor.");
-            
             try {
-                const response = await fetch('prompts.json');
-                if (!response.ok) throw new Error('Prompt dosyası yüklenemedi.');
-                promptTemplates = await response.json();
+                // prompts.json dosyasını fetch ile almak yerine doğrudan objeye çeviriyoruz.
+                // Eğer harici bir dosyada tutmak isterseniz fetch metoduna geri dönebilirsiniz.
+                promptTemplates = {
+                    "parseData": "Bu prompt artık kullanılmıyor.",
+                    "analyzeXr": "Bir kalite kontrol uzmanı olarak, aşağıdaki X-bar ve R grafiği verilerini analiz et. Raporu, rapor tarihi olarak {currentDate} tarihini kullanarak profesyonel bir formatta sun. Sürecin istatistiksel kontrol durumunu, potansiyel nedenleri ve önerileri detaylandır. Veriler: X-bar Noktaları: {groupAverages}, ÜKL: {uclX}, AKL: {lclX}. R Noktaları: {groupRanges}, ÜKL: {uclR}, AKL: {lclR}.",
+                    "analyzeCapability": "Aşağıdaki Süreç Yeterlilik verileri için profesyonel bir analiz raporu oluşturun. Raporun tarihi {currentDate} olmalıdır. Rapor aşağıdaki başlıkları içermelidir:\n\n**1. Analiz Özeti:**\n   - Sürecin genel yeterlilik durumu hakkında net bir sonuç belirtin (Yeterli, Sınırda Yeterli, Yetersiz).\n   - Cp ve Cpk değerlerini baz alarak kısa bir özet sunun.\n\n**2. Süreç Potansiyeli (Cp) Değerlendirmesi:**\n   - Hesaplanan Cp değerinin ne anlama geldiğini açıklayın.\n\n**3. Süreç Performansı (Cpk) Değerlendirmesi:**\n   - Hesaplanan Cpk değerinin ne anlama geldiğini açıklayın.\n   - Cpk değerinin 1.33'ten düşük olup olmadığını baz alarak sürecin fiili yeterliliği hakkında net bir yorum yapın.\n\n**4. Eylem Planı ve Öneriler:**\n   - Analiz sonuçlarına dayanarak atılması gereken adımları listeleyin.\n   - Eğer süreç yetersizse (Cpk < 1.33), öncelikli olarak süreç ortalamasının mı (merkezleme) yoksa süreç değişkenliğinin mi (yayılım) iyileştirilmesi gerektiğini belirtin.\n\n**Analiz Verileri:**\n- Cp: {cp}\n- Cpk: {cpk}\n- Süreç Ortalaması (X̄̄): {overallMean}\n- Üst Spesifikasyon Limiti (ÜSL): {usl}\n- Alt Spesifikasyon Limiti (ASL): {lsl}",
+                    "analyzePareto": "Bir üretim süreci iyileştirme danışmanı olarak, en sık karşılaşılan iki hata türü olan '{topErrors}' için bir kök neden analizi yap. Analizini 6M (İnsan, Makine, Malzeme, Metot, Ölçüm, Ortam) kategorilerini kullanarak yap. Rapor tarihi {currentDate} olmalıdır."
+                };
                 console.log("Promptlar başarıyla yüklendi.");
             } catch (error) {
                 console.error("Promptlar yüklenirken hata oluştu:", error);
-                alert("Uygulama başlatılamadı: Gerekli yapılandırma dosyaları (prompts.json) yüklenemedi.");
+                alert("Uygulama başlatılamadı: Gerekli yapılandırma yüklenemedi.");
                 return;
             }
 
             setupTabs();
-            console.log("Sekmeler ayarlandı.");
             createDataEntryView();
-            console.log("Veri giriş ekranı oluşturuldu.");
             renderHistoryTab();
             if (getHistory().length > 0) {
                 tabs.history.btn.classList.remove('disabled-tab');
             }
-            console.log("Geçmiş sekmesi oluşturuldu.");
 
             document.getElementById('settings-btn').addEventListener('click', openSettingsModal);
             document.getElementById('save-settings-btn').addEventListener('click', () => {
-                const apiKey = document.getElementById('api-key-input').value.trim();
-                const userName = document.getElementById('user-name-input').value.trim();
-                
-                if (apiKey) {
-                    saveApiKey(apiKey);
-                }
-                saveUserName(userName);
-
+                saveApiKey(document.getElementById('api-key-input').value.trim());
+                saveUserName(document.getElementById('user-name-input').value.trim());
                 alert('Ayarlar kaydedildi.');
                 closeSettingsModal();
             });
             document.getElementById('cancel-settings-btn').addEventListener('click', closeSettingsModal);
             
-            // API anahtarı kontrolü
             if (!getApiKey()) {
                 console.log("API anahtarı bulunamadı, ayarlar modal'ı açılıyor.");
                 openSettingsModal();
             }
-
             console.log("init() fonksiyonu başarıyla tamamlandı.");
         }
 
@@ -532,6 +559,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     } catch (error) {
         console.error("KRİTİK BAŞLANGIÇ HATASI:", error);
-        alert("Uygulama başlatılırken kritik bir hata oluştu. Lütfen Geliştirici Konsolunu (F12) kontrol edin ve sayfayı yenileyin. Hata: " + error.message);
+        alert("Uygulama başlatılırken kritik bir hata oluştu. Lütfen Geliştirici Konsolunu (F12) kontrol edin. Hata: " + error.message);
     }
 });
