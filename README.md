@@ -54,9 +54,7 @@ Projeyi Yerel Olarak Çalıştırma
 
     Yukarıda belirtilen üç dosyayı (index.html, style.css, script.js) aynı klasör içine yerleştirin.
 
-    index.html dosyasına çift tıklayarak herhangi bir modern web tarayıcısında (Google Chrome, Firefox, Edge önerilir) açın.
-
-    Uygulama, herhangi bir sunucu veya kurulum gerektirmeden doğrudan çalışacaktır.
+    Localde bir python sunucusu başlatıp uygulamayı çalıştırabilirsiniz.
 
 Not: Uygulamanın yapay zeka özelliklerinin çalışabilmesi için script.js dosyasındaki apiKey değişkenine geçerli bir Google Gemini API anahtarı girilmiş olmalıdır.
 Çalışma Mantığı (Workflow)
