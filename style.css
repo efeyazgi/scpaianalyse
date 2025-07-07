@@ -1,0 +1,123 @@
+body { 
+    font-family: 'Inter', sans-serif; 
+}
+
+.chart-container { 
+    position: relative; 
+    width: 100%; 
+    max-width: 900px; 
+    margin-left: auto; 
+    margin-right: auto; 
+    height: 45vh; 
+    max-height: 500px; 
+}
+
+.tab-btn { 
+    padding: 0.75rem 1.5rem; 
+    font-size: 1rem; 
+    font-weight: 500; 
+    cursor: pointer; 
+    border-bottom: 3px solid transparent; 
+    transition: all 0.3s ease; 
+    color: #6b7280; 
+}
+
+.active-tab-btn { 
+    color: #0369a1; 
+    border-bottom-color: #0369a1; 
+}
+
+.disabled-tab { 
+    color: #9ca3af; 
+    cursor: not-allowed; 
+    background-color: #f3f4f6; 
+}
+
+.gemini-btn { 
+    background: linear-gradient(to right, #4f46e5, #c026d3); 
+    color: white; 
+    transition: all 0.3s ease; 
+}
+
+.gemini-btn:hover:not(:disabled) { 
+    transform: translateY(-2px); 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
+}
+
+.gemini-output { 
+    border-left: 4px solid #4f46e5; 
+    background-color: #fafafa; 
+    padding: 1.5rem; 
+    border-radius: 0.5rem; 
+    margin-top: 1.5rem; 
+}
+
+.gemini-output h1, .gemini-output h2, .gemini-output h3 { 
+    font-weight: 600; 
+    margin-top: 1rem; 
+    margin-bottom: 0.5rem; 
+}
+
+.gemini-output ul { 
+    list-style-type: disc; 
+    padding-left: 1.5rem; 
+}
+
+.loader { 
+    width: 48px; 
+    height: 48px; 
+    border: 5px solid #f3f4f6; 
+    border-top-color: #4f46e5; 
+    border-radius: 50%; 
+    display: inline-block; 
+    box-sizing: border-box; 
+    animation: rotation 1s linear infinite; 
+    margin: 20px auto; 
+}
+
+@keyframes rotation { 
+    0% { transform: rotate(0deg); } 
+    100% { transform: rotate(360deg); } 
+}
+
+.export-btn {
+    background-color: #4a5568;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+.export-btn:hover {
+    background-color: #2d3748;
+}
+
+.history-item .load-history-btn {
+    background-color: #3b82f6;
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+}
+
+.history-item .delete-history-btn {
+    background-color: #ef4444;
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+}
+
+#custom-modal { 
+    position: fixed; 
+    top: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 100%; 
+    background-color: rgba(0,0,0,0.5); 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    z-index: 1000; 
+}

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schott Orim Cam - Yapay Zeka Destekli İPK Platformu</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://unpkg.com/docx@7.8.2/build/index.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-stone-100 text-stone-800">
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-sky-800 mb-2">SCHOTT ORİM CAM</h1>
+            <h2 class="text-xl md:text-2xl font-semibold text-stone-700">Yapay Zeka Destekli İPK Platformu</h2>
+        </header>
+        <div class="border-b border-stone-200 mb-8">
+            <nav id="main-nav" class="flex flex-wrap justify-center -mb-px" aria-label="Tabs">
+                <button id="tab-btn-entry" class="tab-btn active-tab-btn">1. Veri Girişi</button>
+                <button id="tab-btn-overview" class="tab-btn disabled-tab">2. Genel Bakış</button>
+                <button id="tab-btn-xr" class="tab-btn disabled-tab">3. XR Grafikleri</button>
+                <button id="tab-btn-capability" class="tab-btn disabled-tab">4. Yeterlilik (Cp, Cpk)</button>
+                <button id="tab-btn-pareto" class="tab-btn disabled-tab">5. Pareto Analizi</button>
+                <button id="tab-btn-history" class="tab-btn disabled-tab">6. Geçmiş Analizler</button>
+            </nav>
+        </div>
+        <main>
+            <div id="tab-content-entry"></div>
+            <div id="tab-content-overview" class="hidden"></div>
+            <div id="tab-content-xr" class="hidden"></div>
+            <div id="tab-content-capability" class="hidden"></div>
+            <div id="tab-content-pareto" class="hidden"></div>
+            <div id="tab-content-history" class="hidden"></div>
+        </main>
+    </div>
+
+    <!-- Ayarlar Butonu -->
+    <button id="settings-btn" class="fixed bottom-4 right-4 bg-sky-600 text-white p-3 rounded-full shadow-lg hover:bg-sky-700 transition transform hover:scale-110">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+    </button>
+
+    <!-- Ayarlar Modal -->
+    <div id="settings-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+            <h3 class="text-2xl font-semibold text-stone-800 mb-4">Ayarlar</h3>
+            <div class="space-y-4">
+                <div>
+                    <label for="user-name-input" class="block text-sm font-medium text-stone-700 mb-1">Adınız Soyadınız</label>
+                    <input type="text" id="user-name-input" class="w-full p-2 border border-stone-300 rounded-md shadow-sm" placeholder="Raporlarda kullanılacak isim">
+                </div>
+                <div>
+                    <label for="api-key-input" class="block text-sm font-medium text-stone-700 mb-1">Google Gemini API Anahtarı</label>
+                    <input type="password" id="api-key-input" class="w-full p-2 border border-stone-300 rounded-md shadow-sm" placeholder="API anahtarınızı buraya yapıştırın">
+                    <p class="text-xs text-stone-500 mt-1">API anahtarınız tarayıcınızın yerel depolama alanında saklanır ve başka bir yere gönderilmez.</p>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-3 mt-6">
+                <button id="cancel-settings-btn" class="px-4 py-2 bg-stone-200 rounded-md hover:bg-stone-300">İptal</button>
+                <button id="save-settings-btn" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">Kaydet</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
